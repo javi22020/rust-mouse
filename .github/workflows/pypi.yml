@@ -1,19 +1,67 @@
-# .github/workflows/ci-cd.yml
+name: Publish to PyPI
+
 on:
-    push:
-        branches: 
-            - master
+  push:
+    branches:
+      - master
+
 jobs:
+  build:
+    name: Build wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          args: --release --out dist --find-interpreter
+          sccache: "true"
+          manylinux: auto
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
   pypi-publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
+    needs: [build, build-sdist]
     environment:
       name: pypi
       url: https://pypi.org/p/rust-mouse
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-    # retrieve your distributions here
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
 
-    - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
