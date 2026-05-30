@@ -2,6 +2,11 @@
 name = "rust_mouse"
 version = "1.0.1"
 edition = "2024"
+description = "Realistic, human-like mouse movement for Python, powered by Rust."
+license = "MIT"
+repository = "https://github.com/javi22020/rust-mouse"
+readme = "README.md"
+keywords = ["mouse", "automation", "human", "bezier", "input"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
